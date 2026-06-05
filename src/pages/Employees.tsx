@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EmployeeModal } from '../components/EmployeeModal';
 import { useStore } from '../store/useStore';
 
