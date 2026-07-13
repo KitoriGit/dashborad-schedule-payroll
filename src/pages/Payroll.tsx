@@ -3,18 +3,17 @@ import { CalendarDays, ChevronDown, Clock, Sofa, Wallet, Download } from 'lucide
 import { useStore } from '../store/useStore';
 import { DateRangeModal, type DateRange } from '../components/DateRangeModal';
 
-const RATE_WEEKDAY = 3000;
-const RATE_WEEKEND = 3500;
-
 export function Payroll() {
   const employees = useStore((state) => state.employees);
   const shifts = useStore((state) => state.shifts);
+  const roles = useStore((state) => state.roles);
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(employees[0]?.id || '');
   
-  // Rango por defecto (ej. Junio 2026 para testing)
-  const defaultStart = new Date(2026, 5, 1);
-  const defaultEnd = new Date(2026, 5, 30);
+  // Rango por defecto (Mes actual)
+  const today = new Date();
+  const defaultStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const defaultEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   const [dateRange, setDateRange] = useState<DateRange>({ start: defaultStart, end: defaultEnd });
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
 
@@ -47,13 +46,20 @@ export function Payroll() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   };
 
+  const selectedEmployee = employees.find(e => e.id === selectedEmployeeId);
+  const employeeRole = roles.find(r => r.name === selectedEmployee?.role);
+  
+  // Si no tiene rol o el rol fue eliminado, las tarifas son 0
+  const activeWeekdayRate = employeeRole?.weekdayRate || 0;
+  const activeWeekendRate = employeeRole?.weekendRate || 0;
+
   let weekdayHoursTotal = 0;
   let weekendHoursTotal = 0;
   
   const tableRows = filteredShifts.sort((a, b) => a.date.localeCompare(b.date)).map(shift => {
     const hours = calculateHours(shift.startTime, shift.endTime);
     const weekend = isWeekend(shift.date);
-    const rate = weekend ? RATE_WEEKEND : RATE_WEEKDAY;
+    const rate = weekend ? activeWeekendRate : activeWeekdayRate;
     const subtotal = hours * rate;
 
     if (weekend) weekendHoursTotal += hours;
@@ -71,9 +77,40 @@ export function Payroll() {
     };
   });
 
-  const weekdayPayout = weekdayHoursTotal * RATE_WEEKDAY;
-  const weekendPayout = weekendHoursTotal * RATE_WEEKEND;
+  const weekdayPayout = weekdayHoursTotal * activeWeekdayRate;
+  const weekendPayout = weekendHoursTotal * activeWeekendRate;
   const totalPayout = weekdayPayout + weekendPayout;
+
+  const exportToCSV = () => {
+    if (tableRows.length === 0) {
+      alert("No hay datos para exportar en este rango de fechas.");
+      return;
+    }
+
+    // Cabeceras del CSV
+    const headers = ["Fecha", "Tipo de Turno", "Horas Trabajadas", "Tarifa por Hora", "Subtotal"];
+    
+    // Filas de datos
+    const csvRows = tableRows.map(row => {
+      const type = row.weekend ? 'Fin de Semana' : 'Día de Semana';
+      return `"${row.formattedDate}","${type}","${row.hours}","${row.rate}","${row.subtotal}"`;
+    });
+
+    const csvContent = [headers.join(","), ...csvRows].join("\n");
+    
+    // Crear el archivo descargable
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF for BOM (UTF-8 Excel compatibility)
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    const safeName = (selectedEmployee?.name || 'empleado').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.setAttribute("href", url);
+    link.setAttribute("download", `nomina_${safeName}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const rangeString = dateRange.start && dateRange.end 
     ? `${new Intl.DateTimeFormat('es-ES', { month: 'short', day: 'numeric' }).format(dateRange.start)} - ${new Intl.DateTimeFormat('es-ES', { month: 'short', day: 'numeric' }).format(dateRange.end)}`
@@ -131,7 +168,7 @@ export function Payroll() {
               </div>
             </div>
             <div className="mt-6 pt-4 border-t border-surface-variant flex justify-between items-center font-body text-sm text-on-surface-variant">
-              <span>Tarifa Base: {formatCurrency(RATE_WEEKDAY)}/hr</span>
+              <span>Tarifa Base: {formatCurrency(activeWeekdayRate)}/hr</span>
               <span className="font-bold text-on-surface">{formatCurrency(weekdayPayout)}</span>
             </div>
           </div>
@@ -149,7 +186,7 @@ export function Payroll() {
               </div>
             </div>
             <div className="mt-6 pt-4 border-t border-surface-variant flex justify-between items-center font-body text-sm text-on-surface-variant">
-              <span>Tarifa Premium: {formatCurrency(RATE_WEEKEND)}/hr</span>
+              <span>Tarifa Premium: {formatCurrency(activeWeekendRate)}/hr</span>
               <span className="font-bold text-on-surface">{formatCurrency(weekendPayout)}</span>
             </div>
           </div>
@@ -171,7 +208,10 @@ export function Payroll() {
         <section className="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden">
           <div className="p-6 border-b border-surface-variant flex justify-between items-center bg-surface-container-low">
             <h2 className="font-heading text-xl font-medium text-on-surface">Desglose de Turnos</h2>
-            <button className="flex items-center gap-2 font-body text-xs font-bold text-tertiary hover:text-primary-container transition-colors uppercase">
+            <button 
+              onClick={exportToCSV}
+              className="flex items-center gap-2 font-body text-xs font-bold text-tertiary hover:text-primary-container transition-colors uppercase"
+            >
               <Download size={18} /> Exportar CSV
             </button>
           </div>

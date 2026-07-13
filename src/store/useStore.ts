@@ -10,6 +10,20 @@ export interface Employee {
   avatarUrl: string;
 }
 
+export interface Role {
+  id: string;
+  name: string;
+  weekdayRate: number;
+  weekendRate: number;
+}
+
+export interface ShiftTemplate {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface Shift {
   id: string;
   employeeId: string;
@@ -21,11 +35,21 @@ export interface Shift {
 interface AppState {
   employees: Employee[];
   shifts: Shift[];
+  roles: Role[];
+  shiftTemplates: ShiftTemplate[];
+
   addEmployee: (employee: Employee) => void;
   deleteEmployee: (id: string) => void;
   updateEmployeeRole: (id: string, role: string) => void;
   addShift: (shift: Shift) => void;
+  addShifts: (shifts: Shift[]) => void;
+  updateShift: (id: string, updates: Partial<Shift>) => void;
   deleteShift: (id: string) => void;
+  addRole: (role: Role) => void;
+  updateRole: (id: string, updates: Partial<Role>) => void;
+  deleteRole: (id: string) => void;
+  addShiftTemplate: (template: ShiftTemplate) => void;
+  deleteShiftTemplate: (id: string) => void;
 }
 
 // Datos iniciales de prueba (Mock Data)
@@ -57,11 +81,24 @@ const initialShifts: Shift[] = [
   { id: 's6', employeeId: '2', date: '2026-06-07', startTime: '10:00', endTime: '18:00' }  // Weekend
 ];
 
+const initialRoles: Role[] = [
+  { id: 'r1', name: 'Manager', weekdayRate: 3500, weekendRate: 4000 },
+  { id: 'r2', name: 'Barista', weekdayRate: 3000, weekendRate: 3500 },
+  { id: 'r3', name: 'Kitchen', weekdayRate: 3000, weekendRate: 3500 },
+];
+
+const initialShiftTemplates: ShiftTemplate[] = [
+  { id: 't1', name: 'Turno Mañana', startTime: '08:00', endTime: '16:00' },
+  { id: 't2', name: 'Turno Tarde', startTime: '16:00', endTime: '00:00' }
+];
+
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
       employees: initialEmployees,
       shifts: initialShifts,
+      roles: initialRoles,
+      shiftTemplates: initialShiftTemplates,
       
       addEmployee: (employee) => set((state) => ({ 
         employees: [...state.employees, employee] 
@@ -79,8 +116,45 @@ export const useStore = create<AppState>()(
         shifts: [...state.shifts, shift]
       })),
 
+      addShifts: (newShifts) => set((state) => ({
+        shifts: [...state.shifts, ...newShifts]
+      })),
+
+      updateShift: (id, updates) => set((state) => ({
+        shifts: state.shifts.map(s => s.id === id ? { ...s, ...updates } : s)
+      })),
+
       deleteShift: (id) => set((state) => ({
         shifts: state.shifts.filter(s => s.id !== id)
+      })),
+
+      addRole: (role) => set((state) => ({
+        roles: [...state.roles, role]
+      })),
+
+      updateRole: (id, updates) => set((state) => ({
+        roles: state.roles.map(r => r.id === id ? { ...r, ...updates } : r)
+      })),
+
+      deleteRole: (id) => set((state) => {
+        const roleToDelete = state.roles.find(r => r.id === id);
+        if (!roleToDelete) return state;
+
+        return {
+          roles: state.roles.filter(r => r.id !== id),
+          // Si el empleado tenía este rol, pasa a "Sin Rol"
+          employees: state.employees.map(emp => 
+            emp.role === roleToDelete.name ? { ...emp, role: 'Sin Rol' } : emp
+          )
+        };
+      }),
+
+      addShiftTemplate: (template) => set((state) => ({
+        shiftTemplates: [...state.shiftTemplates, template]
+      })),
+
+      deleteShiftTemplate: (id) => set((state) => ({
+        shiftTemplates: state.shiftTemplates.filter(t => t.id !== id)
       }))
     }),
     {

@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Pencil } from 'lucide-react';
 import { ShiftModal } from '../components/ShiftModal';
-import { useStore } from '../store/useStore';
+import { useStore, type Shift } from '../store/useStore';
 
 export function Schedules() {
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
+  const [editingShift, setEditingShift] = useState<Shift | undefined>(undefined);
   const shifts = useStore((state) => state.shifts);
   const employees = useStore((state) => state.employees);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 5, 4));
-  const [calendarDate, setCalendarDate] = useState<Date>(new Date(2026, 5, 1));
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date());
 
   const currentYear = calendarDate.getFullYear();
   const currentMonth = calendarDate.getMonth();
@@ -80,7 +81,10 @@ export function Schedules() {
               <h2 className="font-heading text-3xl font-semibold text-on-surface min-w-[200px]">{formattedMonth}</h2>
             </div>
             <button
-              onClick={() => setIsShiftModalOpen(true)}
+              onClick={() => {
+                setEditingShift(undefined);
+                setIsShiftModalOpen(true);
+              }}
               className="bg-primary-container text-on-primary-container font-body text-sm font-medium px-4 py-2 rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
             >
               <Plus size={18} />
@@ -190,6 +194,16 @@ export function Schedules() {
                       <span className={`${getRoleBgLight(employee.role)} ${getRoleTextColor(employee.role)} font-body text-xs font-bold px-2.5 py-0.5 rounded-full uppercase`}>
                         {employee.role}
                       </span>
+                      <button 
+                        onClick={() => {
+                          setEditingShift(shift);
+                          setIsShiftModalOpen(true);
+                        }}
+                        className="p-1 text-on-surface-variant hover:text-primary-container hover:bg-surface-container-highest rounded-md transition-colors mt-auto"
+                        title="Editar Turno"
+                      >
+                        <Pencil size={16} />
+                      </button>
                     </div>
                   </article>
                 );
@@ -198,7 +212,11 @@ export function Schedules() {
           </div>
         </section>
       </div>
-      <ShiftModal isOpen={isShiftModalOpen} onClose={() => setIsShiftModalOpen(false)} />
+      <ShiftModal 
+        isOpen={isShiftModalOpen} 
+        onClose={() => setIsShiftModalOpen(false)} 
+        initialShift={editingShift}
+      />
     </>
   );
 }

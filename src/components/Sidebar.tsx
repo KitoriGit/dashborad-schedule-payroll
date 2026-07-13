@@ -1,6 +1,6 @@
 import { Calendar, CircleDollarSign, Users, Settings } from 'lucide-react';
 
-export type PageType = 'schedules' | 'payroll' | 'employees';
+export type PageType = 'schedules' | 'payroll' | 'employees' | 'settings';
 
 interface SidebarProps {
   currentPage: PageType;
@@ -44,9 +44,16 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
       {/* Footer */}
       <div className="px-2 mt-auto">
-        <button className="flex items-center w-full gap-3 px-4 py-3 text-surface-variant/70 hover:text-surface transition-colors border-l-4 border-transparent hover:bg-white/5 rounded-r-lg">
-          <Settings size={20} color="#c4c4c4" />
-          <span className="font-body text-on text-sm text-secondary font-medium">Configuración</span>
+        <button 
+          onClick={() => onNavigate('settings')}
+          className={`flex items-center w-full gap-3 px-4 py-3 transition-colors border-l-4 hover:bg-white/5 rounded-r-lg ${
+            currentPage === 'settings' 
+              ? 'text-surface bg-primary-container/10 border-primary-container' 
+              : 'text-surface-variant/70 hover:text-surface border-transparent'
+          }`}
+        >
+          <Settings size={20} className={currentPage === 'settings' ? 'text-primary-container' : 'text-[#c4c4c4]'} />
+          <span className="font-body text-sm font-medium">Configuración</span>
         </button>
       </div>
     </nav>

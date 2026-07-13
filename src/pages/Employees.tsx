@@ -8,6 +8,7 @@ export function Employees() {
   const employees = useStore((state) => state.employees);
   const deleteEmployee = useStore((state) => state.deleteEmployee);
   const updateEmployeeRole = useStore((state) => state.updateEmployeeRole);
+  const roles = useStore((state) => state.roles);
 
   const calculateAge = (dob: string) => {
     if (!dob) return 0;
@@ -84,11 +85,10 @@ export function Employees() {
                             onChange={(e) => updateEmployeeRole(employee.id, e.target.value)}
                             title="Cambiar rol"
                           >
-                            <option value="Manager">Manager</option>
-                            <option value="Barista">Barista</option>
-                            <option value="Kitchen">Kitchen</option>
-                            <option value="Waiter">Waiter</option>
-                            <option value="Cashier">Cashier</option>
+                            <option value="Sin Rol">Sin Rol</option>
+                            {roles.map(r => (
+                              <option key={r.id} value={r.name}>{r.name}</option>
+                            ))}
                           </select>
                         </div>
                         <button 

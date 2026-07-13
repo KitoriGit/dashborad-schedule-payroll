@@ -9,11 +9,12 @@ interface EmployeeModalProps {
 
 export function EmployeeModal({ isOpen, onClose }: EmployeeModalProps) {
   const addEmployee = useStore((state) => state.addEmployee);
+  const roles = useStore((state) => state.roles);
   
   const [name, setName] = useState('');
   const [dni, setDni] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [role, setRole] = useState('Barista');
+  const [role, setRole] = useState(roles.length > 0 ? roles[0].name : 'Sin Rol');
 
   if (!isOpen) return null;
 
@@ -102,9 +103,10 @@ export function EmployeeModal({ isOpen, onClose }: EmployeeModalProps) {
               onChange={(e) => setRole(e.target.value)}
               className="bg-surface-container-highest px-4 py-3 rounded-lg border-none focus:ring-2 focus:ring-primary-container text-on-surface font-body outline-none transition-shadow appearance-none"
             >
-              <option>Barista</option>
-              <option>Kitchen</option>
-              <option>Manager</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.name}>{r.name}</option>
+              ))}
+              {roles.length === 0 && <option value="Sin Rol">Sin Rol</option>}
             </select>
           </div>
         </div>

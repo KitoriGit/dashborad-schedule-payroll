@@ -3,6 +3,7 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 import { Schedules } from './pages/Schedules';
 import { Payroll } from './pages/Payroll';
 import { Employees } from './pages/Employees';
+import { Settings } from './pages/Settings';
 import type { PageType } from './components/Sidebar';
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
       {currentPage === 'schedules' && <Schedules />}
       {currentPage === 'payroll' && <Payroll />}
       {currentPage === 'employees' && <Employees />}
+      {currentPage === 'settings' && <Settings />}
     </DashboardLayout>
   )
 }
